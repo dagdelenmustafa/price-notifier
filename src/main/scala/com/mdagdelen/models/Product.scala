@@ -1,31 +1,24 @@
+/*
+ * Copyright 2022 com.dagdelenmustafa
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mdagdelen.models
 
-import com.mdagdelen.models.marketplaces.{HepsiburadaPriceModel, TrendyolPriceModel}
 import com.mdagdelen.types.IdType
 import com.mdagdelen.types.Types.ProductId
-import io.circe.{Decoder, Encoder}
-import io.circe.syntax._
 import mongo4cats.bson.ObjectId
-import io.circe.generic.auto._
-import cats.syntax.functor._
-
-trait ProductPrice {
-  val sellingPrice: Float
-}
-
-object ProductPriceDerivation {
-  implicit val encodeProductPrice: Encoder[ProductPrice] = Encoder.instance {
-    case hepsiburada @ HepsiburadaPriceModel(_, _) => hepsiburada.asJson
-    case trendyol @ TrendyolPriceModel(_, _)       => trendyol.asJson
-    case _                                         => "".asJson
-  }
-
-  implicit val decodeProductPrice: Decoder[ProductPrice] =
-    List[Decoder[ProductPrice]](
-      Decoder[HepsiburadaPriceModel].widen,
-      Decoder[TrendyolPriceModel].widen
-    ).reduceLeft(_ or _)
-}
 
 case class ProductLookupRequest(url: String)
 
@@ -37,14 +30,13 @@ case class Product(
   name: String,
   brand: Option[String],
   description: Option[List[String]],
-  price: ProductPrice,
   images: List[String],
   category: String,
   color: Option[String],
   marketplace: String
 ) {
   def asProductEntity: ProductEntity =
-    ProductEntity(ObjectId(id), externalId, name, brand, description, price, images, category, color, marketplace)
+    ProductEntity(ObjectId(id), externalId, name, brand, description, images, category, color, marketplace)
 }
 
 case class ProductEntity(
@@ -53,12 +45,11 @@ case class ProductEntity(
   name: String,
   brand: Option[String],
   description: Option[List[String]],
-  price: ProductPrice,
   images: List[String],
   category: String,
   color: Option[String],
   marketplace: String
 ) {
   def asProduct: Product =
-    Product(ProductId(_id), externalId, name, brand, description, price, images, category, color, marketplace)
+    Product(ProductId(_id), externalId, name, brand, description, images, category, color, marketplace)
 }

@@ -1,30 +1,53 @@
+/*
+ * Copyright 2022 com.dagdelenmustafa
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mdagdelen.models.marketplaces
 
-import cats.implicits._
 import cats.effect.Async
+import cats.implicits._
 import com.mdagdelen.exceptions.Exceptions.ProductNotFound
-import com.mdagdelen.models.{Product, ProductId, ProductPrice}
-import com.mdagdelen.types.Types.Hostname
-import org.http4s.client.Client
+import com.mdagdelen.models._
+import com.mdagdelen.types.Types.{Hostname, ProductId}
 import io.circe.generic.auto._
 import mongo4cats.bson.ObjectId
 import org.http4s.EntityDecoder
 import org.http4s.circe._
+import org.http4s.client.Client
 
-case class TrendyolPriceModel(sellingPrice: Float, discountedPrice: Float) extends ProductPrice
 case class TrendyolPublicApiResponse(result: TrendyolPublicApiResponseResult) extends MarketplaceProductResponse {
-  override def asProduct: Product = Product(
-    ProductId(ObjectId()),
+  override def asProduct(productId: ProductId = ProductId(ObjectId())): Product = Product(
+    productId,
     result.id.toString,
     result.name,
     result.brand.map(_.name),
     result.contentDescriptions.map(_.map(_.description)),
-    TrendyolPriceModel(result.price.sellingPrice.value, result.price.discountedPrice.value),
     result.images.map(i => s"https://cdn.dsmcdn.com/$i"),
     result.category.name,
     result.color,
     "trendyol"
   )
+
+  override def asPrice(productId: ProductId): ProductPriceModel =
+    TrendyolPriceModel(
+      ProductPriceId(ObjectId()),
+      productId,
+      result.price.sellingPrice.value,
+      result.price.discountedPrice.value,
+      System.currentTimeMillis()
+    )
 }
 case class TrendyolPublicApiContentDescriptionsResponse(description: String)
 case class TrendyolPublicApiPriceResponseStructure(text: String, value: Float)
@@ -60,7 +83,7 @@ object TrendyolMarketplace {
           res       <- client.expect[TrendyolPublicApiResponse](s"$productPublicApiUrl$productId")
         } yield res
       ).onError { case _ =>
-        Async[F].raiseError(ProductNotFound(path))
+        Async[F].raiseError(ProductNotFound())
       }
     }
   }

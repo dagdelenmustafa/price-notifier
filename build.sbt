@@ -7,10 +7,19 @@ val Mongo4CatsVersion      = "0.6.5"
 
 lazy val root = (project in file("."))
   .settings(
-    organization := "com.mdagdelen",
+    organization := "com.dagdelenmustafa",
+    startYear    := Some(2022),
     name         := "product-notifier",
     version      := "0.0.1-SNAPSHOT",
     scalaVersion := "2.13.10",
+    developers := List(
+      Developer("dagdelenmustafa",
+                "Mustafa Dağdelen",
+                "mustafadagdelen@protonmail.com",
+                url("https://github.com/dagdelenmustafa")
+      )
+    ),
+    licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0")),
     libraryDependencies ++= Seq(
       "org.http4s"         %% "http4s-ember-server" % Http4sVersion,
       "org.http4s"         %% "http4s-ember-client" % Http4sVersion,
