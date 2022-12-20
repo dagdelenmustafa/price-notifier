@@ -54,11 +54,10 @@ final private class PriceRepositoryImpl[F[_]: Async](private val collection: Mon
 }
 
 object PriceRepository {
+  import com.mdagdelen.models.ProductPriceDerivation._
   final private val COLLECTION_NAME: String = "price"
 
   def make[F[_]: Async](db: MongoDatabase[F]): F[PriceRepository[F]] = {
-    import com.mdagdelen.models.ProductPriceDerivation._
-
     db.getCollectionWithCodec[ProductPriceEntity](COLLECTION_NAME).map(col => new PriceRepositoryImpl[F](col))
   }
 }

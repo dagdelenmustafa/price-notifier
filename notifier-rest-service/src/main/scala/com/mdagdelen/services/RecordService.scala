@@ -18,14 +18,13 @@ package com.mdagdelen.services
 
 import cats.effect.Sync
 import cats.implicits._
-import com.mdagdelen.models.{CreateRecordRequest, Record}
+import com.mdagdelen.models.{CreateRecordRequest, CreateRecordResponse, Email, Record}
 import com.mdagdelen.repositories.{PriceRepository, ProductRepository, RecordRepository}
-import com.mdagdelen.types.Types.RecordId
 import mongo4cats.bson.ObjectId
 
 trait RecordService[F[_]] {
   def getProductRecord(id: ObjectId): F[Record]
-  def storeRecord(createRecordRequest: CreateRecordRequest): F[RecordId]
+  def storeRecord(createRecordRequest: CreateRecordRequest): F[CreateRecordResponse]
 }
 
 object RecordService {
@@ -37,12 +36,21 @@ object RecordService {
     new RecordService[F] {
       override def getProductRecord(id: ObjectId): F[Record] = recordRepository.getById(id)
 
-      override def storeRecord(createRecordRequest: CreateRecordRequest): F[RecordId] = for {
-        product <- productRepository.getById(ObjectId(createRecordRequest.productId))
-        price   <- priceRepository.getLatestPriceOfProduct(product.id)
-        recordId <- recordRepository.insert(
-          createRecordRequest.asRecord(product.marketplace, product.externalId, price.sellingPrice)
-        )
+      override def storeRecord(createRecordRequest: CreateRecordRequest): F[CreateRecordResponse] = for {
+        maybeRecord <- recordRepository
+          .productRecordByEmail(Email.from(createRecordRequest.email), createRecordRequest.productId)
+        recordId <- maybeRecord match {
+          case Some(value) =>
+            Sync[F].pure(CreateRecordResponse(isNew = false, isVerified = value.isVerified, id = value.id))
+          case None =>
+            for {
+              product <- productRepository.getById(ObjectId(createRecordRequest.productId))
+              price   <- priceRepository.getLatestPriceOfProduct(product.id)
+              recordId <- recordRepository.insert(
+                createRecordRequest.asRecord(product.marketplace, price.sellingPrice)
+              )
+            } yield CreateRecordResponse(isNew = true, isVerified = false, id = recordId)
+        }
       } yield recordId
     }
 }

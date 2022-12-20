@@ -19,7 +19,7 @@ package com.mdagdelen.models.marketplaces
 import cats.effect.Async
 import cats.implicits._
 import com.mdagdelen.exceptions.Exceptions.ProductNotFound
-import com.mdagdelen.models._
+import com.mdagdelen.models.{Product, ProductId, ProductPriceId, ProductPriceModel, TrendyolPriceModel}
 import com.mdagdelen.types.Types.{Hostname, ProductId}
 import io.circe.generic.auto._
 import mongo4cats.bson.ObjectId

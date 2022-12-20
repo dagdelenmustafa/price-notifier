@@ -16,6 +16,8 @@
 
 package com.mdagdelen.types
 
+import eu.timepit.refined.api.Refined
+import eu.timepit.refined.string.MatchesRegex
 import io.circe.{Decoder, Encoder}
 import mongo4cats.bson.ObjectId
 
@@ -27,10 +29,19 @@ trait IdType[Id] {
   implicit val decoder: Decoder[Id] = Decoder[String].map(apply)
 }
 
+trait StringType[Str] {
+  def apply(id: String): Str = id.asInstanceOf[Str]
+
+  implicit val encoder: Encoder[Str] = Encoder[String].contramap(_.asInstanceOf[String])
+  implicit val decoder: Decoder[Str] = Decoder[String].map(apply)
+}
+
 object Types {
   type RecordId       = String
   type Hostname       = String
   type Path           = String
   type ProductId      = String
   type ProductPriceId = String
+  type Email          = String
+  type EmailRefined   = String Refined MatchesRegex["^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\\.[a-zA-Z]+$"]
 }

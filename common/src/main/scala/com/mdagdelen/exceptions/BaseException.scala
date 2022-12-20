@@ -16,8 +16,8 @@
 
 package com.mdagdelen.exceptions
 
-import com.mdagdelen.types.Types.ProductId
 import mongo4cats.bson.ObjectId
+import com.mdagdelen.types.Types.ProductId
 
 sealed trait BaseException extends Throwable {
   def message: String

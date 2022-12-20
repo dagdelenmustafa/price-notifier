@@ -17,16 +17,17 @@
 package com.mdagdelen.routes
 
 import cats.effect.Concurrent
-import com.mdagdelen.models.{CreateRecordRequest, CreateRecordResponse}
+import cats.implicits._
+import com.mdagdelen.models.CreateRecordRequest
 import com.mdagdelen.services.RecordService
+import io.circe.generic.auto._
+import io.circe.refined._
+import io.circe.syntax._
 import mongo4cats.bson.ObjectId
 import org.http4s.HttpRoutes
-import org.http4s.dsl.Http4sDsl
-import cats.implicits._
-import io.circe.generic.auto._
-import io.circe.syntax._
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.circe.CirceSensitiveDataEntityDecoder.circeEntityDecoder
+import org.http4s.dsl.Http4sDsl
 
 object RecordRoutes {
 
@@ -44,8 +45,8 @@ object RecordRoutes {
       case req @ POST -> Root / "record" =>
         req.decode[CreateRecordRequest] { cRecord =>
           for {
-            id   <- recordService.storeRecord(cRecord)
-            resp <- Ok(CreateRecordResponse(id))
+            record <- recordService.storeRecord(cRecord)
+            resp   <- Ok(record)
           } yield resp
         }
     }

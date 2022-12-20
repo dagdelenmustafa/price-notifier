@@ -1,8 +1,8 @@
 package com.mdagdelen.models
 
 import cats.syntax.functor._
-import com.mdagdelen.types.IdType
 import com.mdagdelen.types.Types.{ProductId, ProductPriceId}
+import com.mdagdelen.types.IdType
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._

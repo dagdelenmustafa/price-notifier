@@ -16,8 +16,8 @@
 
 package com.mdagdelen.models
 
-import com.mdagdelen.types.IdType
 import com.mdagdelen.types.Types.ProductId
+import com.mdagdelen.types.IdType
 import mongo4cats.bson.ObjectId
 
 case class ProductLookupRequest(url: String)

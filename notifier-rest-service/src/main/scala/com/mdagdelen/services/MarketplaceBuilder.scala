@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.mdagdelen.models.marketplaces
+package com.mdagdelen.services
 
 import cats.effect.Async
 import com.mdagdelen.exceptions.Exceptions.UnsupportedMarketplace
+import com.mdagdelen.models.marketplaces.{HepsiburadaMarketplace, Marketplace, TrendyolMarketplace}
 import com.mdagdelen.types.Types.Hostname
 import org.http4s.client.Client
 

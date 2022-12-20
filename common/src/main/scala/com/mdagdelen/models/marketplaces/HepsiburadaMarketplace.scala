@@ -17,7 +17,7 @@
 package com.mdagdelen.models.marketplaces
 
 import cats.effect.Sync
-import com.mdagdelen.models._
+import com.mdagdelen.models.{HepsiburadaPriceModel, Product, ProductId, ProductPriceId, ProductPriceModel}
 import com.mdagdelen.types.Types.{Hostname, ProductId}
 import mongo4cats.bson.ObjectId
 

@@ -19,8 +19,8 @@ package com.mdagdelen.services
 import cats.effect.Sync
 import cats.implicits._
 import com.google.common.net.InternetDomainName
+import com.mdagdelen.models
 import com.mdagdelen.models.{Product, ProductId}
-import com.mdagdelen.models.marketplaces.MarketplaceBuilder
 import com.mdagdelen.repositories.{PriceRepository, ProductRepository}
 import com.mdagdelen.types.Types.{Hostname, Path}
 import mongo4cats.bson.ObjectId
@@ -28,7 +28,7 @@ import mongo4cats.bson.ObjectId
 import java.net.URL
 
 trait ProductService[F[_]] {
-  def productLookUp(url: String): F[Product]
+  def productLookUp(url: String): F[models.Product]
 }
 
 object ProductService {

@@ -20,7 +20,7 @@ import cats.effect.kernel.Async
 import cats.implicits._
 import com.mdagdelen.exceptions.Exceptions
 import com.mdagdelen.models.{Record, RecordEntity}
-import com.mdagdelen.types.Types.RecordId
+import com.mdagdelen.types.Types.{Email, ProductId, RecordId}
 import io.circe.generic.auto._
 import mongo4cats.bson.ObjectId
 import mongo4cats.circe._
@@ -31,6 +31,7 @@ import mongo4cats.operations.Filter
 trait RecordRepository[F[_]] {
   def getById(id: ObjectId): F[Record]
   def insert(record: Record): F[RecordId]
+  def productRecordByEmail(email: Email, productId: ProductId): F[Option[Record]]
 }
 
 final private class RecordRepositoryImpl[F[_]: Async](private val collection: MongoCollection[F, RecordEntity])
@@ -42,6 +43,17 @@ final private class RecordRepositoryImpl[F[_]: Async](private val collection: Mo
       .flatMap(mRecord => Async[F].fromOption(mRecord.map(_.asRecord), Exceptions.EntityDoesNotExist("record", id)))
 
   override def insert(record: Record): F[RecordId] = collection.insertOne(record.asRecordEntity).map(_ => record.id)
+
+  override def productRecordByEmail(email: Email, productId: ProductId): F[Option[Record]] = {
+    collection
+      .find(
+        Filter.eq("productId", productId) &&
+          Filter.eq("email", email) &&
+          Filter.gte("expiredAt", System.currentTimeMillis)
+      )
+      .first
+      .map(_.map(_.asRecord))
+  }
 }
 
 object RecordRepository {

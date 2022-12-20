@@ -4,21 +4,25 @@ ThisBuild / scalaVersion := "2.13.10"
 lazy val dependencies = new {
   val Http4sVersion          = "0.23.16"
   val CirceVersion           = "0.14.3"
+  val CirceRefinedVersion    = "0.14.3"
   val MunitVersion           = "0.7.29"
   val LogbackVersion         = "1.2.11"
   val MunitCatsEffectVersion = "1.0.7"
   val Mongo4CatsVersion      = "0.6.5"
   val GoogleGuavaVersion     = "31.1-jre"
   val SvmMetaVersion         = "20.2.0"
+  val RefinedVersions        = "0.10.1"
 
   val http4sEmberServer  = "org.http4s"         %% "http4s-ember-server" % Http4sVersion
   val http4sEmberClient  = "org.http4s"         %% "http4s-ember-client" % Http4sVersion
   val http4sCirce        = "org.http4s"         %% "http4s-circe"        % Http4sVersion
   val http4sDsl          = "org.http4s"         %% "http4s-dsl"          % Http4sVersion
   val circeGeneric       = "io.circe"           %% "circe-generic"       % CirceVersion
+  val circeRefined       = "io.circe"           %% "circe-refined"       % CirceRefinedVersion
   val mongo4catsCore     = "io.github.kirill5k" %% "mongo4cats-core"     % Mongo4CatsVersion
   val mongo4catsCirce    = "io.github.kirill5k" %% "mongo4cats-circe"    % Mongo4CatsVersion
   val guava              = "com.google.guava"    % "guava"               % GoogleGuavaVersion
+  val refined            = "eu.timepit"         %% "refined"             % RefinedVersions
   val mongo4catsEmbedded = "io.github.kirill5k" %% "mongo4cats-embedded" % Mongo4CatsVersion      % Test
   val munit              = "org.scalameta"      %% "munit"               % MunitVersion           % Test
   val munitCatsEffect    = "org.typelevel"      %% "munit-cats-effect-3" % MunitCatsEffectVersion % Test
@@ -27,22 +31,24 @@ lazy val dependencies = new {
 }
 
 lazy val commonDependencies = Seq(
+  dependencies.http4sEmberClient,
+  dependencies.http4sCirce,
   dependencies.circeGeneric,
   dependencies.munit,
   dependencies.munitCatsEffect,
+  dependencies.mongo4catsCore,
+  dependencies.mongo4catsCirce,
+  dependencies.circeRefined,
+  dependencies.refined,
   dependencies.logback,
+  dependencies.mongo4catsEmbedded,
   dependencies.svmMeta
 )
 
 lazy val notifierRestServiceDependencies = commonDependencies ++ Seq(
   dependencies.http4sEmberServer,
-  dependencies.http4sEmberClient,
-  dependencies.http4sCirce,
   dependencies.http4sDsl,
-  dependencies.mongo4catsCore,
-  dependencies.mongo4catsCirce,
-  dependencies.guava,
-  dependencies.mongo4catsEmbedded
+  dependencies.guava
 )
 
 lazy val root = project
@@ -72,6 +78,21 @@ lazy val notifierRestService = project
     version     := "0.0.1-SNAPSHOT",
     settings,
     libraryDependencies ++= notifierRestServiceDependencies,
+    addCompilerPlugin("org.typelevel" %% "kind-projector"     % "0.13.2" cross CrossVersion.full),
+    addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % "0.3.1"),
+    testFrameworks += new TestFramework("munit.Framework")
+  )
+  .disablePlugins(AssemblyPlugin)
+  .dependsOn(common)
+
+lazy val notifierPriceChecker = project
+  .in(file("notifier-price-checker"))
+  .settings(
+    description := "Price checker",
+    name        := "notifier-price-checker",
+    version     := "0.0.1-SNAPSHOT",
+    settings,
+    libraryDependencies ++= commonDependencies,
     addCompilerPlugin("org.typelevel" %% "kind-projector"     % "0.13.2" cross CrossVersion.full),
     addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % "0.3.1"),
     testFrameworks += new TestFramework("munit.Framework")
