@@ -18,9 +18,12 @@ package com.mdagdelen.services
 
 import cats.effect.Sync
 import cats.implicits._
-import com.mdagdelen.models.{CreateRecordRequest, CreateRecordResponse, Email, Record}
+import com.mdagdelen.gateways.{RabbitMQGateway, RabbitQueues}
+import com.mdagdelen.models.{CreateRecordRequest, CreateRecordResponse, Email, Record, VerificationQueueMessage}
 import com.mdagdelen.repositories.{PriceRepository, ProductRepository, RecordRepository}
 import mongo4cats.bson.ObjectId
+
+import java.util.UUID
 
 trait RecordService[F[_]] {
   def getProductRecord(id: ObjectId): F[Record]
@@ -31,7 +34,8 @@ object RecordService {
   def make[F[_]: Sync](
     productRepository: ProductRepository[F],
     recordRepository: RecordRepository[F],
-    priceRepository: PriceRepository[F]
+    priceRepository: PriceRepository[F],
+    rabbitMQGateway: RabbitMQGateway[F]
   ): RecordService[F] =
     new RecordService[F] {
       override def getProductRecord(id: ObjectId): F[Record] = recordRepository.getById(id)
@@ -48,6 +52,10 @@ object RecordService {
               price   <- priceRepository.getLatestPriceOfProduct(product.id)
               recordId <- recordRepository.insert(
                 createRecordRequest.asRecord(product.marketplace, price.sellingPrice)
+              )
+              _ <- rabbitMQGateway.publish(
+                RabbitQueues.VERIFICATION_QUEUE,
+                VerificationQueueMessage(UUID.randomUUID(), Email.from(createRecordRequest.email), "verificationURL")
               )
             } yield CreateRecordResponse(isNew = true, isVerified = false, id = recordId)
         }

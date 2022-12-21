@@ -19,15 +19,32 @@ package com.mdagdelen
 import cats.effect.kernel.Async
 
 case class MongoConfig(connectionUrl: String, database: String)
+case class RabbitMQConfig(
+  host: String,
+  username: String,
+  password: String,
+  exchangeName: String,
+  verificationRoutingKey: String,
+  notificationRoutingKey: String
+)
 
 sealed abstract class Config {
   val mongo: MongoConfig
+  val rabbitMQ: RabbitMQConfig
 }
 
 object Config {
   def load[F[_]: Async]: F[Config] = Async[F].pure {
     new Config {
       override val mongo: MongoConfig = MongoConfig("mongodb://localhost:27017", "notifier")
+      override val rabbitMQ: RabbitMQConfig = RabbitMQConfig(
+        "127.0.0.1",
+        "guest",
+        "guest",
+        "amq.direct",
+        "verification-routing-key",
+        "notification-routing-key"
+      )
     }
   }
 }

@@ -18,6 +18,7 @@ package com.mdagdelen.services
 
 import cats.effect.Async
 import com.mdagdelen.AppResources
+import com.mdagdelen.gateways.AppGateways
 import com.mdagdelen.repositories.AppRepositories
 
 sealed trait AppServices[F[_]] {
@@ -27,7 +28,11 @@ sealed trait AppServices[F[_]] {
 }
 
 object AppServices {
-  def make[F[_]: Async](appRepositories: AppRepositories[F], appResources: AppResources[F]): AppServices[F] =
+  def make[F[_]: Async](
+    appRepositories: AppRepositories[F],
+    appResources: AppResources[F],
+    appGateways: AppGateways[F]
+  ): AppServices[F] =
     new AppServices[F] {
       override val marketplaceBuilder: MarketplaceBuilder[F] =
         MarketplaceBuilder.make[F](appResources.client)
@@ -35,6 +40,11 @@ object AppServices {
         ProductService.make[F](marketplaceBuilder, appRepositories.productRepository, appRepositories.priceRepository)
       override val recordService: RecordService[F] =
         RecordService
-          .make[F](appRepositories.productRepository, appRepositories.recordRepository, appRepositories.priceRepository)
+          .make[F](
+            appRepositories.productRepository,
+            appRepositories.recordRepository,
+            appRepositories.priceRepository,
+            appGateways.rabbitMQGateway
+          )
     }
 }

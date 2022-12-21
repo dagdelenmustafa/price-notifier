@@ -18,13 +18,21 @@ package com.mdagdelen
 
 import cats.effect.Resource
 import cats.effect.kernel.Async
-import cats.implicits.catsSyntaxTuple2Semigroupal
+import cats.implicits._
+import dev.profunktor.fs2rabbit.config.Fs2RabbitConfig
+import dev.profunktor.fs2rabbit.interpreter.RabbitClient
 import mongo4cats.client.MongoClient
 import mongo4cats.database.MongoDatabase
 import org.http4s.client.Client
 import org.http4s.ember.client.EmberClientBuilder
 
-sealed abstract class AppResources[F[_]](val client: Client[F], val mongo: MongoDatabase[F])
+import scala.concurrent.duration.{FiniteDuration, SECONDS}
+
+sealed abstract class AppResources[F[_]](
+  val client: Client[F],
+  val mongo: MongoDatabase[F],
+  val rabbitMQ: RabbitClient[F]
+)
 
 object AppResources {
 
@@ -33,6 +41,29 @@ object AppResources {
     def mongoResource(c: MongoConfig): Resource[F, MongoDatabase[F]] =
       MongoClient.fromConnectionString[F](c.connectionUrl).evalMap(_.getDatabase(c.database))
 
-    (EmberClientBuilder.default.build, mongoResource(cfg.mongo)).mapN(new AppResources[F](_, _) {})
+    def rabbitMQResource(c: RabbitMQConfig): Resource[F, RabbitClient[F]] = {
+      val config: Fs2RabbitConfig = Fs2RabbitConfig(
+        virtualHost = "/",
+        host = c.host,
+        username = Some(c.username),
+        password = Some(c.password),
+        port = 5672,
+        ssl = false,
+        connectionTimeout = FiniteDuration(3, SECONDS),
+        requeueOnNack = false,
+        internalQueueSize = Some(500),
+        requestedHeartbeat = FiniteDuration(3, SECONDS),
+        automaticRecovery = true,
+        requeueOnReject = false
+      )
+
+      RabbitClient.default[F](config).resource
+    }
+
+    (
+      EmberClientBuilder.default.build,
+      mongoResource(cfg.mongo),
+      rabbitMQResource(cfg.rabbitMQ)
+    ).parMapN(new AppResources[F](_, _, _) {})
   }
 }

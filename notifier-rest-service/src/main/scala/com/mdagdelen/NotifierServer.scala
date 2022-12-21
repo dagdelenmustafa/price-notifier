@@ -20,6 +20,7 @@ import cats.Parallel
 import cats.effect.{Async, ExitCode}
 import cats.syntax.all._
 import com.comcast.ip4s._
+import com.mdagdelen.gateways.AppGateways
 import com.mdagdelen.repositories.AppRepositories
 import com.mdagdelen.routes.{ProductRoutes, RecordRoutes}
 import com.mdagdelen.services.AppServices
@@ -34,7 +35,8 @@ object NotifierServer {
     exitCode <- AppResources.make[F](config).use { resources =>
       for {
         repositories <- AppRepositories.make[F](resources)
-        services = AppServices.make[F](repositories, resources)
+        gateways     <- AppGateways.make[F](config.rabbitMQ, resources)
+        services = AppServices.make[F](repositories, resources, gateways)
         httpApp = (
           RecordRoutes
             .recordRoutes[F](services.recordService) <+> ProductRoutes.productRoutes[F](services.productService)

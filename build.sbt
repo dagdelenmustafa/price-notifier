@@ -12,17 +12,23 @@ lazy val dependencies = new {
   val GoogleGuavaVersion     = "31.1-jre"
   val SvmMetaVersion         = "20.2.0"
   val RefinedVersions        = "0.10.1"
+  val Fs2Version             = "3.4.0"
+  val Fs2RabbitVersion       = "5.0.0"
 
-  val http4sEmberServer  = "org.http4s"         %% "http4s-ember-server" % Http4sVersion
-  val http4sEmberClient  = "org.http4s"         %% "http4s-ember-client" % Http4sVersion
-  val http4sCirce        = "org.http4s"         %% "http4s-circe"        % Http4sVersion
-  val http4sDsl          = "org.http4s"         %% "http4s-dsl"          % Http4sVersion
-  val circeGeneric       = "io.circe"           %% "circe-generic"       % CirceVersion
-  val circeRefined       = "io.circe"           %% "circe-refined"       % CirceRefinedVersion
-  val mongo4catsCore     = "io.github.kirill5k" %% "mongo4cats-core"     % Mongo4CatsVersion
-  val mongo4catsCirce    = "io.github.kirill5k" %% "mongo4cats-circe"    % Mongo4CatsVersion
-  val guava              = "com.google.guava"    % "guava"               % GoogleGuavaVersion
-  val refined            = "eu.timepit"         %% "refined"             % RefinedVersions
+  val http4sEmberServer = "org.http4s"         %% "http4s-ember-server" % Http4sVersion
+  val http4sEmberClient = "org.http4s"         %% "http4s-ember-client" % Http4sVersion
+  val http4sCirce       = "org.http4s"         %% "http4s-circe"        % Http4sVersion
+  val http4sDsl         = "org.http4s"         %% "http4s-dsl"          % Http4sVersion
+  val circeGeneric      = "io.circe"           %% "circe-generic"       % CirceVersion
+  val circeRefined      = "io.circe"           %% "circe-refined"       % CirceRefinedVersion
+  val mongo4catsCore    = "io.github.kirill5k" %% "mongo4cats-core"     % Mongo4CatsVersion
+  val mongo4catsCirce   = "io.github.kirill5k" %% "mongo4cats-circe"    % Mongo4CatsVersion
+  val guava             = "com.google.guava"    % "guava"               % GoogleGuavaVersion
+  val refined           = "eu.timepit"         %% "refined"             % RefinedVersions
+  val fs2               = "co.fs2"             %% "fs2-core"            % Fs2Version
+  val fs2Rabbit         = "dev.profunktor"     %% "fs2-rabbit"          % Fs2RabbitVersion
+  val fs2RabbitCirce    = "dev.profunktor"     %% "fs2-rabbit-circe"    % Fs2RabbitVersion
+
   val mongo4catsEmbedded = "io.github.kirill5k" %% "mongo4cats-embedded" % Mongo4CatsVersion      % Test
   val munit              = "org.scalameta"      %% "munit"               % MunitVersion           % Test
   val munitCatsEffect    = "org.typelevel"      %% "munit-cats-effect-3" % MunitCatsEffectVersion % Test
@@ -48,7 +54,10 @@ lazy val commonDependencies = Seq(
 lazy val notifierRestServiceDependencies = commonDependencies ++ Seq(
   dependencies.http4sEmberServer,
   dependencies.http4sDsl,
-  dependencies.guava
+  dependencies.guava,
+  dependencies.fs2,
+  dependencies.fs2Rabbit,
+  dependencies.fs2RabbitCirce
 )
 
 lazy val root = project
