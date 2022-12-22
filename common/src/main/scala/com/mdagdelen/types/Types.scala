@@ -21,6 +21,8 @@ import eu.timepit.refined.string.MatchesRegex
 import io.circe.{Decoder, Encoder}
 import mongo4cats.bson.ObjectId
 
+import java.util.UUID
+
 trait IdType[Id] {
   def apply(id: String): Id   = id.asInstanceOf[Id]
   def apply(id: ObjectId): Id = apply(id.toHexString)
@@ -43,5 +45,6 @@ object Types {
   type ProductId      = String
   type ProductPriceId = String
   type Email          = String
+  type VerificationId = UUID
   type EmailRefined   = String Refined MatchesRegex["^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\\.[a-zA-Z]+$"]
 }

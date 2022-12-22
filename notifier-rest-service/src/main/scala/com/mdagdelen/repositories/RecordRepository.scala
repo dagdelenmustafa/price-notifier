@@ -26,12 +26,16 @@ import mongo4cats.bson.ObjectId
 import mongo4cats.circe._
 import mongo4cats.collection.MongoCollection
 import mongo4cats.database.MongoDatabase
-import mongo4cats.operations.Filter
+import mongo4cats.operations.{Filter, Update}
+
+import java.util.UUID
 
 trait RecordRepository[F[_]] {
   def getById(id: ObjectId): F[Record]
   def insert(record: Record): F[RecordId]
   def productRecordByEmail(email: Email, productId: ProductId): F[Option[Record]]
+  def verifyRecordByVerificationId(verificationUUID: UUID): F[Long]
+  def incrementNumberOfEmailVerificationRequest(id: ObjectId): F[Unit]
 }
 
 final private class RecordRepositoryImpl[F[_]: Async](private val collection: MongoCollection[F, RecordEntity])
@@ -53,6 +57,22 @@ final private class RecordRepositoryImpl[F[_]: Async](private val collection: Mo
       )
       .first
       .map(_.map(_.asRecord))
+  }
+
+  override def verifyRecordByVerificationId(verificationUUID: UUID): F[Long] = {
+    val update = Update.set("verification.isVerified", true)
+
+    collection
+      .updateOne(Filter.eq("verification.verificationId", verificationUUID.toString), update)
+      .map(_.getModifiedCount)
+  }
+
+  override def incrementNumberOfEmailVerificationRequest(id: ObjectId): F[Unit] = {
+    val update = Update.inc("verification.numberOfResend", 1)
+
+    collection
+      .updateOne(Filter.eq("_id", id), update)
+      .as(())
   }
 }
 

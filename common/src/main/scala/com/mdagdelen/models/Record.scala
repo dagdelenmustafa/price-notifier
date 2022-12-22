@@ -20,14 +20,18 @@ import com.mdagdelen.types.Types.{Email, EmailRefined, ProductId, RecordId}
 import com.mdagdelen.types.IdType
 import mongo4cats.bson.ObjectId
 
+import java.util.UUID
+
 object RecordId extends IdType[RecordId]
+
+case class EmailVerification(isVerified: Boolean, verificationId: String, numberOfResend: Int = 0)
 
 case class Record(
   id: RecordId,
   marketplace: String,
   productId: String,
   email: Email,
-  isVerified: Boolean,
+  verification: EmailVerification,
   priceAtQT: Float,
   createdAt: Long,
   expiredAt: Long
@@ -38,7 +42,7 @@ case class Record(
       marketplace = marketplace,
       productId = productId,
       email = email,
-      isVerified = isVerified,
+      verification = verification,
       priceAtQT = priceAtQT,
       createdAt = createdAt,
       expiredAt = expiredAt
@@ -52,7 +56,7 @@ case class CreateRecordRequest(productId: ProductId, expireAt: Long, email: Emai
       marketplace = marketplace,
       productId = productId,
       email = Email.from(email),
-      isVerified = false,
+      verification = EmailVerification(isVerified = false, UUID.randomUUID().toString),
       priceAtQT = priceAtQT,
       createdAt = System.currentTimeMillis(),
       expiredAt = expireAt
@@ -64,7 +68,7 @@ case class RecordEntity(
   marketplace: String,
   productId: String,
   email: Email,
-  isVerified: Boolean,
+  verification: EmailVerification,
   priceAtQT: Float,
   createdAt: Long,
   expiredAt: Long
@@ -75,7 +79,7 @@ case class RecordEntity(
       marketplace = marketplace,
       productId = productId,
       email = email,
-      isVerified = isVerified,
+      verification = verification,
       priceAtQT = priceAtQT,
       createdAt = System.currentTimeMillis(),
       expiredAt = expiredAt
@@ -83,3 +87,4 @@ case class RecordEntity(
 }
 
 case class CreateRecordResponse(isNew: Boolean, isVerified: Boolean, id: RecordId)
+case class ResendVerificationEmailRequest(id: RecordId)

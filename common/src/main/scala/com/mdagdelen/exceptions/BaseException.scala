@@ -19,6 +19,8 @@ package com.mdagdelen.exceptions
 import mongo4cats.bson.ObjectId
 import com.mdagdelen.types.Types.ProductId
 
+import java.util.UUID
+
 sealed trait BaseException extends Throwable {
   def message: String
 
@@ -42,4 +44,15 @@ object Exceptions {
     override val message: String = s"Couldn't find the price with productId: $productId"
   }
 
+  final case class VerificationNotFound(verificationUUID: UUID) extends BaseException {
+    override val message: String = s"Couldn't find the verification with id: $verificationUUID"
+  }
+
+  final case object AlreadyVerifiedException extends BaseException {
+    override val message: String = s"verification has been already verified"
+  }
+
+  final case object TooManyResendRequestException extends BaseException {
+    override val message: String = s"Too many email verification request"
+  }
 }

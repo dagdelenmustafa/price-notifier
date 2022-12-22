@@ -10,8 +10,8 @@ import java.util.UUID
 
 sealed trait QueueMessage
 
-case class VerificationQueueMessage(id: UUID, email: Email, verificationUrl: String) extends QueueMessage
-case class NotificationQueueMessage(id: UUID, email: Email, message: String)         extends QueueMessage
+case class VerificationQueueMessage(id: UUID, email: Email, verificationId: String) extends QueueMessage
+case class NotificationQueueMessage(id: UUID, email: Email, message: String)        extends QueueMessage
 
 object QueueMessageDerivation {
   implicit val encodeQueueMessage: Encoder[QueueMessage] = Encoder.instance {

@@ -18,9 +18,11 @@ package com.mdagdelen.services
 
 import cats.effect.Sync
 import cats.implicits._
+import com.mdagdelen.exceptions.Exceptions
 import com.mdagdelen.gateways.{RabbitMQGateway, RabbitQueues}
-import com.mdagdelen.models.{CreateRecordRequest, CreateRecordResponse, Email, Record, VerificationQueueMessage}
+import com.mdagdelen.models._
 import com.mdagdelen.repositories.{PriceRepository, ProductRepository, RecordRepository}
+import com.mdagdelen.types.Types.{RecordId, VerificationId}
 import mongo4cats.bson.ObjectId
 
 import java.util.UUID
@@ -28,6 +30,8 @@ import java.util.UUID
 trait RecordService[F[_]] {
   def getProductRecord(id: ObjectId): F[Record]
   def storeRecord(createRecordRequest: CreateRecordRequest): F[CreateRecordResponse]
+  def verifyEmail(verificationUUID: VerificationId): F[Unit]
+  def resendVerificationEmail(recordId: RecordId): F[Unit]
 }
 
 object RecordService {
@@ -45,20 +49,46 @@ object RecordService {
           .productRecordByEmail(Email.from(createRecordRequest.email), createRecordRequest.productId)
         recordId <- maybeRecord match {
           case Some(value) =>
-            Sync[F].pure(CreateRecordResponse(isNew = false, isVerified = value.isVerified, id = value.id))
+            Sync[F].pure(CreateRecordResponse(isNew = false, isVerified = value.verification.isVerified, id = value.id))
           case None =>
             for {
               product <- productRepository.getById(ObjectId(createRecordRequest.productId))
               price   <- priceRepository.getLatestPriceOfProduct(product.id)
-              recordId <- recordRepository.insert(
-                createRecordRequest.asRecord(product.marketplace, price.sellingPrice)
-              )
+              record = createRecordRequest.asRecord(product.marketplace, price.sellingPrice)
+              _ <- recordRepository.insert(record)
               _ <- rabbitMQGateway.publish(
                 RabbitQueues.VERIFICATION_QUEUE,
-                VerificationQueueMessage(UUID.randomUUID(), Email.from(createRecordRequest.email), "verificationURL")
+                VerificationQueueMessage(
+                  UUID.randomUUID(),
+                  Email.from(createRecordRequest.email),
+                  record.verification.verificationId
+                )
               )
-            } yield CreateRecordResponse(isNew = true, isVerified = false, id = recordId)
+            } yield CreateRecordResponse(isNew = true, isVerified = false, id = record.id)
         }
       } yield recordId
+
+      override def verifyEmail(verificationUUID: UUID): F[Unit] = for {
+        updated <- recordRepository.verifyRecordByVerificationId(verificationUUID)
+        _       <- if (updated == 0) Sync[F].raiseError(Exceptions.AlreadyVerifiedException) else Sync[F].unit
+      } yield ()
+
+      override def resendVerificationEmail(recordId: RecordId): F[Unit] = for {
+        record <- recordRepository.getById(ObjectId(recordId))
+        _ <-
+          if (record.verification.isVerified) Sync[F].raiseError(Exceptions.AlreadyVerifiedException) else Sync[F].unit
+        _ <-
+          if (record.verification.numberOfResend > 2) Sync[F].raiseError(Exceptions.TooManyResendRequestException)
+          else Sync[F].unit
+        _ <- rabbitMQGateway.publish(
+          RabbitQueues.VERIFICATION_QUEUE,
+          VerificationQueueMessage(
+            UUID.randomUUID(),
+            record.email,
+            record.verification.verificationId
+          )
+        )
+        _ <- recordRepository.incrementNumberOfEmailVerificationRequest(ObjectId(record.id))
+      } yield ()
     }
 }

@@ -18,7 +18,7 @@ package com.mdagdelen.routes
 
 import cats.effect.Concurrent
 import cats.implicits._
-import com.mdagdelen.models.CreateRecordRequest
+import com.mdagdelen.models.{CreateRecordRequest, ResendVerificationEmailRequest}
 import com.mdagdelen.services.RecordService
 import io.circe.generic.auto._
 import io.circe.refined._
@@ -28,6 +28,8 @@ import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.circe.CirceSensitiveDataEntityDecoder.circeEntityDecoder
 import org.http4s.dsl.Http4sDsl
+
+import java.util.UUID
 
 object RecordRoutes {
 
@@ -46,7 +48,21 @@ object RecordRoutes {
         req.decode[CreateRecordRequest] { cRecord =>
           for {
             record <- recordService.storeRecord(cRecord)
-            resp   <- Ok(record)
+            resp   <- Created(record)
+          } yield resp
+        }
+
+      case GET -> Root / "record" / "verify" / id =>
+        for {
+          _    <- recordService.verifyEmail(UUID.fromString(id))
+          resp <- Ok()
+        } yield resp
+
+      case req @ POST -> Root / "record" / "verify" / "resend" =>
+        req.decode[ResendVerificationEmailRequest] { cRecord =>
+          for {
+            _    <- recordService.resendVerificationEmail(cRecord.id)
+            resp <- Ok()
           } yield resp
         }
     }
