@@ -29,7 +29,7 @@ import mongo4cats.operations.Filter
 
 trait PriceRepository[F[_]] {
   def getById(id: ObjectId): F[ProductPriceModel]
-  def getLatestPriceOfProduct(productId: ProductId): F[ProductPriceModel]
+  def getLatestPriceOfProduct(productId: ProductId): F[Option[ProductPriceModel]]
   def insert(price: ProductPriceModel): F[ProductPriceId]
 }
 
@@ -44,13 +44,12 @@ final private class PriceRepositoryImpl[F[_]: Async](private val collection: Mon
   override def insert(price: ProductPriceModel): F[ProductPriceId] =
     collection.insertOne(price.asEntity).map(_ => price.id)
 
-  override def getLatestPriceOfProduct(productId: ProductId): F[ProductPriceModel] =
+  override def getLatestPriceOfProduct(productId: ProductId): F[Option[ProductPriceModel]] =
     collection
       .find(Filter.eq("productId", productId))
       .sortByDesc("_id")
       .first
-      .flatMap(mPrice => Async[F].fromOption(mPrice.map(_.asModel), Exceptions.PriceNotFound(productId)))
-
+      .map(_.map(_.asModel))
 }
 
 object PriceRepository {

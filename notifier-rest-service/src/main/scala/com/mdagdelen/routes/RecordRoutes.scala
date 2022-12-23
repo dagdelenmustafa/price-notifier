@@ -18,7 +18,7 @@ package com.mdagdelen.routes
 
 import cats.effect.Concurrent
 import cats.implicits._
-import com.mdagdelen.models.{CreateRecordRequest, ResendVerificationEmailRequest}
+import com.mdagdelen.models.{CreateRecordRequest, CreateRecordResponse, Record, ResendVerificationEmailRequest}
 import com.mdagdelen.services.RecordService
 import io.circe.generic.auto._
 import io.circe.refined._
@@ -27,42 +27,44 @@ import mongo4cats.bson.ObjectId
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.circe.CirceSensitiveDataEntityDecoder.circeEntityDecoder
-import org.http4s.dsl.Http4sDsl
 
 import java.util.UUID
 
 object RecordRoutes {
 
-  def recordRoutes[F[_]: Concurrent](recordService: RecordService[F]): HttpRoutes[F] = {
-    val dsl = new Http4sDsl[F] {}
+  def recordRoutes[F[_]: Concurrent](recordService: RecordService[F]): Route[F] = new Route[F] {
     import dsl._
 
-    HttpRoutes.of[F] {
+    override val routes: HttpRoutes[F] = HttpRoutes.of[F] {
       case GET -> Root / "record" / id =>
         for {
           record <- recordService.getProductRecord(ObjectId(id))
-          resp   <- Ok(record.asJson)
+          resp   <- handleResp[Record](record, r => Ok(r.asJson))
         } yield resp
 
       case req @ POST -> Root / "record" =>
         req.decode[CreateRecordRequest] { cRecord =>
           for {
             record <- recordService.storeRecord(cRecord)
-            resp   <- Created(record)
+            resp <- handleResp[CreateRecordResponse](
+              record,
+              r => if (r.isNew) Created(r.asJson) else Ok(r.asJson)
+            )
           } yield resp
         }
 
       case GET -> Root / "record" / "verify" / id =>
         for {
-          _    <- recordService.verifyEmail(UUID.fromString(id))
-          resp <- Ok()
+          // TODO: Implement FUUID
+          e    <- recordService.verifyEmail(UUID.fromString(id))
+          resp <- handleResp[Unit](e, _ => Ok())
         } yield resp
 
       case req @ POST -> Root / "record" / "verify" / "resend" =>
         req.decode[ResendVerificationEmailRequest] { cRecord =>
           for {
-            _    <- recordService.resendVerificationEmail(cRecord.id)
-            resp <- Ok()
+            e    <- recordService.resendVerificationEmail(cRecord.id)
+            resp <- handleResp[Unit](e, _ => Ok())
           } yield resp
         }
     }

@@ -17,20 +17,19 @@
 package com.mdagdelen.services
 
 import cats.effect.Async
-import com.mdagdelen.exceptions.Exceptions.UnsupportedMarketplace
 import com.mdagdelen.models.marketplaces.{HepsiburadaMarketplace, Marketplace, TrendyolMarketplace}
 import com.mdagdelen.types.Types.Hostname
 import org.http4s.client.Client
 
 trait MarketplaceBuilder[F[_]] {
-  def fromHostname(hostname: Hostname): F[Marketplace[F]]
+  def fromHostname(hostname: Hostname): F[Option[Marketplace[F]]]
 }
 
 object MarketplaceBuilder {
   def make[F[_]: Async](client: Client[F]): MarketplaceBuilder[F] = new MarketplaceBuilder[F] {
     val marketPlaces = List(TrendyolMarketplace.make[F](client), HepsiburadaMarketplace.make[F]())
 
-    override def fromHostname(hostname: Hostname): F[Marketplace[F]] =
-      Async[F].fromOption(marketPlaces.find(_.hostname == hostname), UnsupportedMarketplace(hostname))
+    override def fromHostname(hostname: Hostname): F[Option[Marketplace[F]]] =
+      Async[F].pure(marketPlaces.find(_.hostname == hostname))
   }
 }

@@ -21,38 +21,47 @@ import com.mdagdelen.types.Types.ProductId
 
 import java.util.UUID
 
-sealed trait BaseException extends Throwable {
+sealed trait BaseError extends Throwable {
   def message: String
 
   override def getMessage: String = message
 }
 
+sealed trait NotFoundError       extends BaseError
+sealed trait BadRequestError     extends BaseError
+sealed trait ConflictError       extends BaseError
+sealed trait TooManyRequestError extends BaseError
+
 object Exceptions {
-  final case class EntityDoesNotExist(entityName: String, id: ObjectId) extends BaseException {
+  final case class EntityDoesNotExist(entityName: String, id: ObjectId) extends NotFoundError {
     override val message: String = s"$entityName with id $id does not exist"
   }
 
-  final case class UnsupportedMarketplace(marketplaceHost: String) extends BaseException {
+  final case class UnsupportedMarketplace(marketplaceHost: String) extends BadRequestError {
     override val message: String = s"Unsupported marketplace $marketplaceHost"
   }
 
-  final case class ProductNotFound() extends BaseException {
+  final case object ProductNotFound extends NotFoundError {
     override val message: String = s"Couldn't find the product"
   }
 
-  final case class PriceNotFound(productId: ProductId) extends BaseException {
+  final case class PriceNotFound(productId: ProductId) extends NotFoundError {
     override val message: String = s"Couldn't find the price with productId: $productId"
   }
 
-  final case class VerificationNotFound(verificationUUID: UUID) extends BaseException {
+  final case class VerificationNotFound(verificationUUID: UUID) extends NotFoundError {
     override val message: String = s"Couldn't find the verification with id: $verificationUUID"
   }
 
-  final case object AlreadyVerifiedException extends BaseException {
+  final case object AlreadyVerifiedError extends ConflictError {
     override val message: String = s"verification has been already verified"
   }
 
-  final case object TooManyResendRequestException extends BaseException {
+  final case object TooManyResendRequestError extends TooManyRequestError {
     override val message: String = s"Too many email verification request"
+  }
+
+  final case object MalformedUrlError extends BadRequestError {
+    override val message: String = s"Given url is not supported."
   }
 }

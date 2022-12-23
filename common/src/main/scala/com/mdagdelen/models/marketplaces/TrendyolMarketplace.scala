@@ -83,7 +83,7 @@ object TrendyolMarketplace {
           res       <- client.expect[TrendyolPublicApiResponse](s"$productPublicApiUrl$productId")
         } yield res
       ).onError { case _ =>
-        Async[F].raiseError(ProductNotFound())
+        Async[F].raiseError(ProductNotFound)
       }
     }
   }

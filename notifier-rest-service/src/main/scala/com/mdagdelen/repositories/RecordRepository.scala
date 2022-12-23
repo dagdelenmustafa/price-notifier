@@ -18,7 +18,6 @@ package com.mdagdelen.repositories
 
 import cats.effect.kernel.Async
 import cats.implicits._
-import com.mdagdelen.exceptions.Exceptions
 import com.mdagdelen.models.{Record, RecordEntity}
 import com.mdagdelen.types.Types.{Email, ProductId, RecordId}
 import io.circe.generic.auto._
@@ -31,7 +30,7 @@ import mongo4cats.operations.{Filter, Update}
 import java.util.UUID
 
 trait RecordRepository[F[_]] {
-  def getById(id: ObjectId): F[Record]
+  def getById(id: ObjectId): F[Option[Record]]
   def insert(record: Record): F[RecordId]
   def productRecordByEmail(email: Email, productId: ProductId): F[Option[Record]]
   def verifyRecordByVerificationId(verificationUUID: UUID): F[Long]
@@ -40,11 +39,11 @@ trait RecordRepository[F[_]] {
 
 final private class RecordRepositoryImpl[F[_]: Async](private val collection: MongoCollection[F, RecordEntity])
     extends RecordRepository[F] {
-  override def getById(id: ObjectId): F[Record] =
+  override def getById(id: ObjectId): F[Option[Record]] =
     collection
       .find(Filter.eq("_id", id))
       .first
-      .flatMap(mRecord => Async[F].fromOption(mRecord.map(_.asRecord), Exceptions.EntityDoesNotExist("record", id)))
+      .map(_.map(_.asRecord))
 
   override def insert(record: Record): F[RecordId] = collection.insertOne(record.asRecordEntity).map(_ => record.id)
 

@@ -29,7 +29,7 @@ import mongo4cats.database.MongoDatabase
 import mongo4cats.operations.Filter
 
 trait ProductRepository[F[_]] {
-  def getById(id: ObjectId): F[Product]
+  def getById(id: ObjectId): F[Option[Product]]
   def getByExternalId(externalId: String, marketplace: String): F[Product]
   def insert(product: Product): F[ProductId]
   def insertIfNotExist(product: Product): F[ProductId]
@@ -37,11 +37,11 @@ trait ProductRepository[F[_]] {
 
 final private class ProductRepositoryImpl[F[_]: Async](private val collection: MongoCollection[F, ProductEntity])
     extends ProductRepository[F] {
-  override def getById(id: ObjectId): F[Product] =
+  override def getById(id: ObjectId): F[Option[Product]] =
     collection
       .find(Filter.eq("_id", id))
       .first
-      .flatMap(mProduct => Async[F].fromOption(mProduct.map(_.asProduct), Exceptions.EntityDoesNotExist("product", id)))
+      .map(_.map(_.asProduct))
 
   override def insert(product: Product): F[ProductId] =
     collection.insertOne(product.asProductEntity).map(_ => product.id)
@@ -50,7 +50,7 @@ final private class ProductRepositoryImpl[F[_]: Async](private val collection: M
     collection
       .find(Filter.eq("externalId", externalId) && Filter.eq("marketplace", marketplace))
       .first
-      .flatMap(mProduct => Async[F].fromOption(mProduct.map(_.asProduct), Exceptions.ProductNotFound()))
+      .flatMap(mProduct => Async[F].fromOption(mProduct.map(_.asProduct), Exceptions.ProductNotFound))
 
   override def insertIfNotExist(product: Product): F[ProductId] = for {
     maybeProduct <- getByExternalIdOpt(product.externalId, product.marketplace)

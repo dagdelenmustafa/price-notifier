@@ -38,8 +38,8 @@ object NotifierServer {
         gateways     <- AppGateways.make[F](config.rabbitMQ, resources)
         services = AppServices.make[F](repositories, resources, gateways)
         httpApp = (
-          RecordRoutes
-            .recordRoutes[F](services.recordService) <+> ProductRoutes.productRoutes[F](services.productService)
+          RecordRoutes.recordRoutes[F](services.recordService).routes <+>
+            ProductRoutes.productRoutes[F](services.productService).routes
         ).orNotFound
         finalHttpApp = MiddlewareLogger.httpApp(logHeaders = true, logBody = true)(httpApp)
         exitCode <- EmberServerBuilder

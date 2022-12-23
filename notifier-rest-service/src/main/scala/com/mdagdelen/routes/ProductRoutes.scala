@@ -18,25 +18,24 @@ package com.mdagdelen.routes
 
 import cats.effect.Concurrent
 import cats.implicits._
-import com.mdagdelen.models.ProductLookupRequest
+import com.mdagdelen.models.{Product, ProductLookupRequest}
 import com.mdagdelen.services.ProductService
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.circe.CirceSensitiveDataEntityDecoder.circeEntityDecoder
-import org.http4s.dsl.Http4sDsl
 
 object ProductRoutes {
 
-  def productRoutes[F[_]: Concurrent](productService: ProductService[F]): HttpRoutes[F] = {
-    val dsl = new Http4sDsl[F] {}
+  def productRoutes[F[_]: Concurrent](productService: ProductService[F]): Route[F] = new Route[F] {
     import dsl._
-    HttpRoutes.of[F] { case req @ POST -> Root / "product" / "lookup" =>
+
+    override val routes: HttpRoutes[F] = HttpRoutes.of[F] { case req @ POST -> Root / "product" / "lookup" =>
       req.decode[ProductLookupRequest] { cLookup =>
         for {
           product <- productService.productLookUp(cLookup.url)
-          resp    <- Ok(product.asJson)
+          resp    <- handleResp[Product](product, p => Ok(p.asJson))
         } yield resp
       }
     }
