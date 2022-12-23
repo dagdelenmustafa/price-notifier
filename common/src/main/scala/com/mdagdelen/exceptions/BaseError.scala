@@ -17,9 +17,7 @@
 package com.mdagdelen.exceptions
 
 import mongo4cats.bson.ObjectId
-import com.mdagdelen.types.Types.ProductId
-
-import java.util.UUID
+import com.mdagdelen.types.Types.{ProductId, VerificationId}
 
 sealed trait BaseError extends Throwable {
   def message: String
@@ -49,7 +47,7 @@ object Exceptions {
     override val message: String = s"Couldn't find the price with productId: $productId"
   }
 
-  final case class VerificationNotFound(verificationUUID: UUID) extends NotFoundError {
+  final case class VerificationNotFound(verificationUUID: VerificationId) extends NotFoundError {
     override val message: String = s"Couldn't find the verification with id: $verificationUUID"
   }
 

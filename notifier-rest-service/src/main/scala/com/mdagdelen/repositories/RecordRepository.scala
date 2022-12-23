@@ -19,7 +19,8 @@ package com.mdagdelen.repositories
 import cats.effect.kernel.Async
 import cats.implicits._
 import com.mdagdelen.models.{Record, RecordEntity}
-import com.mdagdelen.types.Types.{Email, ProductId, RecordId}
+import com.mdagdelen.types.Types.{Email, ProductId, RecordId, VerificationId}
+import io.chrisdavenport.fuuid.circe._
 import io.circe.generic.auto._
 import mongo4cats.bson.ObjectId
 import mongo4cats.circe._
@@ -27,13 +28,11 @@ import mongo4cats.collection.MongoCollection
 import mongo4cats.database.MongoDatabase
 import mongo4cats.operations.{Filter, Update}
 
-import java.util.UUID
-
 trait RecordRepository[F[_]] {
   def getById(id: ObjectId): F[Option[Record]]
   def insert(record: Record): F[RecordId]
   def productRecordByEmail(email: Email, productId: ProductId): F[Option[Record]]
-  def verifyRecordByVerificationId(verificationUUID: UUID): F[Long]
+  def verifyRecordByVerificationId(verificationUUID: VerificationId): F[Long]
   def incrementNumberOfEmailVerificationRequest(id: ObjectId): F[Unit]
 }
 
@@ -58,7 +57,7 @@ final private class RecordRepositoryImpl[F[_]: Async](private val collection: Mo
       .map(_.map(_.asRecord))
   }
 
-  override def verifyRecordByVerificationId(verificationUUID: UUID): F[Long] = {
+  override def verifyRecordByVerificationId(verificationUUID: VerificationId): F[Long] = {
     val update = Update.set("verification.isVerified", true)
 
     collection

@@ -14,6 +14,7 @@ lazy val dependencies = new {
   val RefinedVersions        = "0.10.1"
   val Fs2Version             = "3.4.0"
   val Fs2RabbitVersion       = "5.0.0"
+  val FUUIDVersion           = "0.8.0-M2"
 
   val http4sEmberServer = "org.http4s"         %% "http4s-ember-server" % Http4sVersion
   val http4sEmberClient = "org.http4s"         %% "http4s-ember-client" % Http4sVersion
@@ -28,6 +29,9 @@ lazy val dependencies = new {
   val fs2               = "co.fs2"             %% "fs2-core"            % Fs2Version
   val fs2Rabbit         = "dev.profunktor"     %% "fs2-rabbit"          % Fs2RabbitVersion
   val fs2RabbitCirce    = "dev.profunktor"     %% "fs2-rabbit-circe"    % Fs2RabbitVersion
+  val FUUID             = "io.chrisdavenport"  %% "fuuid"               % FUUIDVersion
+  val FUUIDCirce        = "io.chrisdavenport"  %% "fuuid-circe"         % FUUIDVersion
+  val FUUIDHttp4s       = "io.chrisdavenport"  %% "fuuid-http4s"        % FUUIDVersion
 
   val mongo4catsEmbedded = "io.github.kirill5k" %% "mongo4cats-embedded" % Mongo4CatsVersion      % Test
   val munit              = "org.scalameta"      %% "munit"               % MunitVersion           % Test
@@ -48,7 +52,9 @@ lazy val commonDependencies = Seq(
   dependencies.refined,
   dependencies.logback,
   dependencies.mongo4catsEmbedded,
-  dependencies.svmMeta
+  dependencies.svmMeta,
+  dependencies.FUUID,
+  dependencies.FUUIDCirce
 )
 
 lazy val notifierRestServiceDependencies = commonDependencies ++ Seq(
@@ -57,7 +63,8 @@ lazy val notifierRestServiceDependencies = commonDependencies ++ Seq(
   dependencies.guava,
   dependencies.fs2,
   dependencies.fs2Rabbit,
-  dependencies.fs2RabbitCirce
+  dependencies.fs2RabbitCirce,
+  dependencies.FUUIDHttp4s
 )
 
 lazy val root = project

@@ -20,6 +20,8 @@ import cats.effect.Concurrent
 import cats.implicits._
 import com.mdagdelen.models.{CreateRecordRequest, CreateRecordResponse, Record, ResendVerificationEmailRequest}
 import com.mdagdelen.services.RecordService
+import io.chrisdavenport.fuuid.circe._
+import io.chrisdavenport.fuuid.http4s.FUUIDVar
 import io.circe.generic.auto._
 import io.circe.refined._
 import io.circe.syntax._
@@ -27,8 +29,6 @@ import mongo4cats.bson.ObjectId
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.circe.CirceSensitiveDataEntityDecoder.circeEntityDecoder
-
-import java.util.UUID
 
 object RecordRoutes {
 
@@ -38,6 +38,7 @@ object RecordRoutes {
     override val routes: HttpRoutes[F] = HttpRoutes.of[F] {
       case GET -> Root / "record" / id =>
         for {
+          // TODO: Wrap the creation of the ObjectId with Effect
           record <- recordService.getProductRecord(ObjectId(id))
           resp   <- handleResp[Record](record, r => Ok(r.asJson))
         } yield resp
@@ -53,10 +54,9 @@ object RecordRoutes {
           } yield resp
         }
 
-      case GET -> Root / "record" / "verify" / id =>
+      case GET -> Root / "record" / "verify" / FUUIDVar(id) =>
         for {
-          // TODO: Implement FUUID
-          e    <- recordService.verifyEmail(UUID.fromString(id))
+          e    <- recordService.verifyEmail(id)
           resp <- handleResp[Unit](e, _ => Ok())
         } yield resp
 

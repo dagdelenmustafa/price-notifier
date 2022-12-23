@@ -16,15 +16,13 @@
 
 package com.mdagdelen.models
 
-import com.mdagdelen.types.Types.{Email, EmailRefined, ProductId, RecordId}
 import com.mdagdelen.types.IdType
+import com.mdagdelen.types.Types.{Email, EmailRefined, ProductId, RecordId, VerificationId}
 import mongo4cats.bson.ObjectId
-
-import java.util.UUID
 
 object RecordId extends IdType[RecordId]
 
-case class EmailVerification(isVerified: Boolean, verificationId: String, numberOfResend: Int = 0)
+case class EmailVerification(isVerified: Boolean, verificationId: VerificationId, numberOfResend: Int = 0)
 
 case class Record(
   id: RecordId,
@@ -50,13 +48,13 @@ case class Record(
 }
 
 case class CreateRecordRequest(productId: ProductId, expireAt: Long, email: EmailRefined) {
-  def asRecord(marketplace: String, priceAtQT: Float): Record =
+  def asRecord(marketplace: String, priceAtQT: Float, verificationId: VerificationId): Record =
     Record(
       id = RecordId(ObjectId()),
       marketplace = marketplace,
       productId = productId,
       email = Email.from(email),
-      verification = EmailVerification(isVerified = false, UUID.randomUUID().toString),
+      verification = EmailVerification(isVerified = false, verificationId),
       priceAtQT = priceAtQT,
       createdAt = System.currentTimeMillis(),
       expiredAt = expireAt
@@ -81,7 +79,7 @@ case class RecordEntity(
       email = email,
       verification = verification,
       priceAtQT = priceAtQT,
-      createdAt = System.currentTimeMillis(),
+      createdAt = createdAt,
       expiredAt = expiredAt
     )
 }

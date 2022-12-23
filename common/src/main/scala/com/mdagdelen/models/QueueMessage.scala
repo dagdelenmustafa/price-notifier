@@ -1,17 +1,17 @@
 package com.mdagdelen.models
 
-import com.mdagdelen.types.Types.Email
+import cats.syntax.functor._
+import com.mdagdelen.types.Types.{Email, VerificationId}
+import io.chrisdavenport.fuuid.FUUID
+import io.chrisdavenport.fuuid.circe._
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
-import cats.syntax.functor._
-
-import java.util.UUID
 
 sealed trait QueueMessage
 
-case class VerificationQueueMessage(id: UUID, email: Email, verificationId: String) extends QueueMessage
-case class NotificationQueueMessage(id: UUID, email: Email, message: String)        extends QueueMessage
+case class VerificationQueueMessage(id: FUUID, email: Email, verificationId: VerificationId) extends QueueMessage
+case class NotificationQueueMessage(id: FUUID, email: Email, message: String)                extends QueueMessage
 
 object QueueMessageDerivation {
   implicit val encodeQueueMessage: Encoder[QueueMessage] = Encoder.instance {

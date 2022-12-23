@@ -24,9 +24,8 @@ import com.mdagdelen.gateways.{RabbitMQGateway, RabbitQueues}
 import com.mdagdelen.models._
 import com.mdagdelen.repositories.{PriceRepository, ProductRepository, RecordRepository}
 import com.mdagdelen.types.Types.{RecordId, VerificationId}
+import io.chrisdavenport.fuuid.FUUID
 import mongo4cats.bson.ObjectId
-
-import java.util.UUID
 
 trait RecordService[F[_]] {
   def getProductRecord(id: ObjectId): F[Either[BaseError, Record]]
@@ -69,13 +68,15 @@ object RecordService {
                   priceRepository.getLatestPriceOfProduct(product.id),
                   Exceptions.PriceNotFound(product.id)
                 )
-                record = createRecordRequest.asRecord(product.marketplace, price.sellingPrice)
-                _ <- EitherT.right[BaseError](recordRepository.insert(record))
+                verificationId <- EitherT.right[BaseError](FUUID.randomFUUID[F])
+                record = createRecordRequest.asRecord(product.marketplace, price.sellingPrice, verificationId)
+                _              <- EitherT.right[BaseError](recordRepository.insert(record))
+                verificationId <- EitherT.right[BaseError](FUUID.randomFUUID[F])
                 _ <- EitherT.right[BaseError](
                   rabbitMQGateway.publish(
                     RabbitQueues.VERIFICATION_QUEUE,
                     VerificationQueueMessage(
-                      UUID.randomUUID(),
+                      verificationId,
                       Email.from(createRecordRequest.email),
                       record.verification.verificationId
                     )
@@ -85,7 +86,7 @@ object RecordService {
           }
         } yield recordId).value
 
-      override def verifyEmail(verificationUUID: UUID): F[Either[BaseError, Unit]] = (for {
+      override def verifyEmail(verificationUUID: VerificationId): F[Either[BaseError, Unit]] = (for {
         // TODO: update with findOneAndUpdate and check if there is an existing record with the given verification id.
         updated <- EitherT.liftF[F, BaseError, Long](recordRepository.verifyRecordByVerificationId(verificationUUID))
         _ <- EitherT.fromEither[F](
@@ -100,12 +101,12 @@ object RecordService {
         )
         _ <- EitherT.cond[F](!record.verification.isVerified, (), Exceptions.AlreadyVerifiedError)
         _ <- EitherT.cond[F](!(record.verification.numberOfResend > 2), (), Exceptions.TooManyResendRequestError)
-
+        verificationId <- EitherT.right[BaseError](FUUID.randomFUUID[F])
         _ <- EitherT.right[BaseError](
           rabbitMQGateway.publish(
             RabbitQueues.VERIFICATION_QUEUE,
             VerificationQueueMessage(
-              UUID.randomUUID(),
+              verificationId,
               record.email,
               record.verification.verificationId
             )
