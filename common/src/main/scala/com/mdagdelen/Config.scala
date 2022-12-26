@@ -25,7 +25,9 @@ case class RabbitMQConfig(
   password: String,
   exchangeName: String,
   verificationRoutingKey: String,
-  notificationRoutingKey: String
+  notificationRoutingKey: String,
+  verificationQueueName: String,
+  notificationQueueName: String
 )
 
 sealed abstract class Config {
@@ -43,7 +45,9 @@ object Config {
         "guest",
         "amq.direct",
         "verification-routing-key",
-        "notification-routing-key"
+        "notification-routing-key",
+        "verification-queue",
+        "notification-queue"
       )
     }
   }

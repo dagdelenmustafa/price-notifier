@@ -15,6 +15,7 @@ lazy val dependencies = new {
   val Fs2Version             = "3.4.0"
   val Fs2RabbitVersion       = "5.0.0"
   val FUUIDVersion           = "0.8.0-M2"
+  val SendgridVersion        = "4.9.3"
 
   val http4sEmberServer = "org.http4s"         %% "http4s-ember-server" % Http4sVersion
   val http4sEmberClient = "org.http4s"         %% "http4s-ember-client" % Http4sVersion
@@ -32,6 +33,7 @@ lazy val dependencies = new {
   val FUUID             = "io.chrisdavenport"  %% "fuuid"               % FUUIDVersion
   val FUUIDCirce        = "io.chrisdavenport"  %% "fuuid-circe"         % FUUIDVersion
   val FUUIDHttp4s       = "io.chrisdavenport"  %% "fuuid-http4s"        % FUUIDVersion
+  val sendgrid          = "com.sendgrid"        % "sendgrid-java"       % SendgridVersion
 
   val mongo4catsEmbedded = "io.github.kirill5k" %% "mongo4cats-embedded" % Mongo4CatsVersion      % Test
   val munit              = "org.scalameta"      %% "munit"               % MunitVersion           % Test
@@ -54,17 +56,21 @@ lazy val commonDependencies = Seq(
   dependencies.mongo4catsEmbedded,
   dependencies.svmMeta,
   dependencies.FUUID,
-  dependencies.FUUIDCirce
+  dependencies.FUUIDCirce,
+  dependencies.fs2,
+  dependencies.fs2Rabbit,
+  dependencies.fs2RabbitCirce
 )
 
 lazy val notifierRestServiceDependencies = commonDependencies ++ Seq(
   dependencies.http4sEmberServer,
   dependencies.http4sDsl,
   dependencies.guava,
-  dependencies.fs2,
-  dependencies.fs2Rabbit,
-  dependencies.fs2RabbitCirce,
   dependencies.FUUIDHttp4s
+)
+
+lazy val notifierNotificationSenderDependencies = commonDependencies ++ Seq(
+  dependencies.sendgrid
 )
 
 lazy val root = project
@@ -109,6 +115,21 @@ lazy val notifierPriceChecker = project
     version     := "0.0.1-SNAPSHOT",
     settings,
     libraryDependencies ++= commonDependencies,
+    addCompilerPlugin("org.typelevel" %% "kind-projector"     % "0.13.2" cross CrossVersion.full),
+    addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % "0.3.1"),
+    testFrameworks += new TestFramework("munit.Framework")
+  )
+  .disablePlugins(AssemblyPlugin)
+  .dependsOn(common)
+
+lazy val notifierNotificationSender = project
+  .in(file("notifier-notification-sender"))
+  .settings(
+    description := "A service that sends notifications to end users.",
+    name        := "notifier-notification-sender",
+    version     := "0.0.1-SNAPSHOT",
+    settings,
+    libraryDependencies ++= notifierNotificationSenderDependencies,
     addCompilerPlugin("org.typelevel" %% "kind-projector"     % "0.13.2" cross CrossVersion.full),
     addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % "0.3.1"),
     testFrameworks += new TestFramework("munit.Framework")
