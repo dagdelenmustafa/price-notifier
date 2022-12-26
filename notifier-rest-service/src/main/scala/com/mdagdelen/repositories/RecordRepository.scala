@@ -20,6 +20,7 @@ import cats.effect.kernel.Async
 import cats.implicits._
 import com.mdagdelen.models.{Record, RecordEntity}
 import com.mdagdelen.types.Types.{Email, ProductId, RecordId, VerificationId}
+import com.mongodb.client.result.UpdateResult
 import io.chrisdavenport.fuuid.circe._
 import io.circe.generic.auto._
 import mongo4cats.bson.ObjectId
@@ -32,7 +33,7 @@ trait RecordRepository[F[_]] {
   def getById(id: ObjectId): F[Option[Record]]
   def insert(record: Record): F[RecordId]
   def productRecordByEmail(email: Email, productId: ProductId): F[Option[Record]]
-  def verifyRecordByVerificationId(verificationUUID: VerificationId): F[Long]
+  def verifyRecordByVerificationId(verificationUUID: VerificationId): F[UpdateResult]
   def incrementNumberOfEmailVerificationRequest(id: ObjectId): F[Unit]
 }
 
@@ -57,12 +58,11 @@ final private class RecordRepositoryImpl[F[_]: Async](private val collection: Mo
       .map(_.map(_.asRecord))
   }
 
-  override def verifyRecordByVerificationId(verificationUUID: VerificationId): F[Long] = {
+  override def verifyRecordByVerificationId(verificationUUID: VerificationId): F[UpdateResult] = {
     val update = Update.set("verification.isVerified", true)
 
     collection
       .updateOne(Filter.eq("verification.verificationId", verificationUUID.toString), update)
-      .map(_.getModifiedCount)
   }
 
   override def incrementNumberOfEmailVerificationRequest(id: ObjectId): F[Unit] = {

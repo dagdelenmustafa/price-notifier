@@ -24,6 +24,7 @@ import com.mdagdelen.gateways.{RabbitMQGateway, RabbitQueues}
 import com.mdagdelen.models._
 import com.mdagdelen.repositories.{PriceRepository, ProductRepository, RecordRepository}
 import com.mdagdelen.types.Types.{RecordId, VerificationId}
+import com.mongodb.client.result.UpdateResult
 import io.chrisdavenport.fuuid.FUUID
 import mongo4cats.bson.ObjectId
 
@@ -87,10 +88,15 @@ object RecordService {
         } yield recordId).value
 
       override def verifyEmail(verificationUUID: VerificationId): F[Either[BaseError, Unit]] = (for {
-        // TODO: update with findOneAndUpdate and check if there is an existing record with the given verification id.
-        updated <- EitherT.liftF[F, BaseError, Long](recordRepository.verifyRecordByVerificationId(verificationUUID))
+        updated <- EitherT.liftF[F, BaseError, UpdateResult](
+          recordRepository.verifyRecordByVerificationId(verificationUUID)
+        )
         _ <- EitherT.fromEither[F](
-          Either.cond[BaseError, Unit](updated != 0, (), Exceptions.AlreadyVerifiedError)
+          Either
+            .cond[BaseError, Unit](updated.getMatchedCount != 0, (), Exceptions.VerificationNotFound(verificationUUID))
+        )
+        _ <- EitherT.fromEither[F](
+          Either.cond[BaseError, Unit](updated.getModifiedCount != 0, (), Exceptions.AlreadyVerifiedError)
         )
       } yield ()).value
 

@@ -16,7 +16,7 @@ trait Route[F[_]] extends RouteComponents[F] {
   val routes: HttpRoutes[F]
 }
 
-abstract class RouteComponents[F[_]: Applicative] {
+sealed abstract class RouteComponents[F[_]: Applicative] {
   val dsl: Http4sDsl[F] = new Http4sDsl[F] {}
   import dsl._
 
@@ -35,9 +35,6 @@ abstract class RouteComponents[F[_]: Applicative] {
 
   object ObjectIdVar {
     def unapply(str: String): Option[ObjectId] =
-      if (str.nonEmpty) {
-        Either.catchNonFatal(ObjectId(str)).fold(_ => None, Some(_))
-      } else
-        None
+      if (str.nonEmpty) Either.catchNonFatal(ObjectId(str)).fold(_ => None, Some(_)) else None
   }
 }
