@@ -21,5 +21,5 @@ This app uses the following dependencies:
 - **<u>MongoDB</u>** to store data.
 
 ## Flows
-![image info](docs/record_creation_flow.png)
-![image info](docs/notification_flow.png)
+![image info](/docs/record_creation_flow.png)
+![image info](./docs/notification_flow.png)
