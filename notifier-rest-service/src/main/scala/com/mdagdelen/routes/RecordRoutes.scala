@@ -25,7 +25,6 @@ import io.chrisdavenport.fuuid.http4s.FUUIDVar
 import io.circe.generic.auto._
 import io.circe.refined._
 import io.circe.syntax._
-import mongo4cats.bson.ObjectId
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.circe.CirceSensitiveDataEntityDecoder.circeEntityDecoder
@@ -36,10 +35,9 @@ object RecordRoutes {
     import dsl._
 
     override val routes: HttpRoutes[F] = HttpRoutes.of[F] {
-      case GET -> Root / "record" / id =>
+      case GET -> Root / "record" / ObjectIdVar(id) =>
         for {
-          // TODO: Wrap the creation of the ObjectId with Effect
-          record <- recordService.getProductRecord(ObjectId(id))
+          record <- recordService.getProductRecord(id)
           resp   <- handleResp[Record](record, r => Ok(r.asJson))
         } yield resp
 

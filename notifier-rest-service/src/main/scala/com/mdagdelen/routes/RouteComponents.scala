@@ -1,9 +1,11 @@
 package com.mdagdelen.routes
 
 import cats._
+import cats.implicits._
 import com.mdagdelen.exceptions.{BadRequestError, BaseError, ConflictError, NotFoundError, TooManyRequestError}
 import io.circe.syntax._
 import io.circe.generic.auto._
+import mongo4cats.bson.ObjectId
 import org.http4s.{HttpRoutes, Response}
 import org.http4s.circe.jsonEncoder
 import org.http4s.dsl.Http4sDsl
@@ -29,5 +31,13 @@ abstract class RouteComponents[F[_]: Applicative] {
         }
       case Right(v) => r(v)
     }
+  }
+
+  object ObjectIdVar {
+    def unapply(str: String): Option[ObjectId] =
+      if (str.nonEmpty) {
+        Either.catchNonFatal(ObjectId(str)).fold(_ => None, Some(_))
+      } else
+        None
   }
 }
