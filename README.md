@@ -11,6 +11,7 @@ To run this app, you will need to have the following installed on your system:
 To get started with this app, clone the repository to your local machine:
 ```bash
 git clone https://github.com/dagdelenmustafa/price-notifier.git
+cd price-notifier
 ```
 
 and prepare the environment with docker compose. It will create the required containers and also the required queues and binding in RabbitMQ.
@@ -34,4 +35,4 @@ This app uses the following dependencies:
 ![image info](docs/notification_flow.png)
 
 ## License
-This project is licensed under the [Apache-2.0]("https://www.apache.org/licenses/LICENSE-2.0").
+This project is licensed under the [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0).
