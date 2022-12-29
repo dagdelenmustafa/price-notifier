@@ -83,6 +83,7 @@ lazy val root = project
   )
 
 lazy val common = project
+  .in(file("modules/common"))
   .settings(
     description := "Common components for the notifier app.",
     name        := "common",
@@ -93,7 +94,7 @@ lazy val common = project
   .disablePlugins(AssemblyPlugin)
 
 lazy val notifierRestService = project
-  .in(file("notifier-rest-service"))
+  .in(file("modules/notifier-rest-service"))
   .settings(
     description := "Rest service of the notifier app",
     name        := "notifier-rest-service",
@@ -108,7 +109,7 @@ lazy val notifierRestService = project
   .dependsOn(common)
 
 lazy val notifierPriceChecker = project
-  .in(file("notifier-price-checker"))
+  .in(file("modules/notifier-price-checker"))
   .settings(
     description := "Price checker",
     name        := "notifier-price-checker",
@@ -123,7 +124,7 @@ lazy val notifierPriceChecker = project
   .dependsOn(common)
 
 lazy val notifierNotificationSender = project
-  .in(file("notifier-notification-sender"))
+  .in(file("modules/notifier-notification-sender"))
   .settings(
     description := "A service that sends notifications to end users.",
     name        := "notifier-notification-sender",

@@ -16,7 +16,7 @@ trait Route[F[_]] extends RouteComponents[F] {
   val routes: HttpRoutes[F]
 }
 
-sealed abstract class RouteComponents[F[_]: Applicative] {
+abstract class RouteComponents[F[_]: Applicative] {
   val dsl: Http4sDsl[F] = new Http4sDsl[F] {}
   import dsl._
 
