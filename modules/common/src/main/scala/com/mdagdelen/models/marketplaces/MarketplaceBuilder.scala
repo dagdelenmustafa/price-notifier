@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.mdagdelen.services
+package com.mdagdelen.models.marketplaces
 
 import cats.effect.Async
-import com.mdagdelen.models.marketplaces.{HepsiburadaMarketplace, Marketplace, TrendyolMarketplace}
 import com.mdagdelen.types.Types.Hostname
 import org.http4s.client.Client
 
 trait MarketplaceBuilder[F[_]] {
   def fromHostname(hostname: Hostname): F[Option[Marketplace[F]]]
+  def fromName(name: String): F[Option[Marketplace[F]]]
 }
 
 object MarketplaceBuilder {
@@ -31,5 +31,8 @@ object MarketplaceBuilder {
 
     override def fromHostname(hostname: Hostname): F[Option[Marketplace[F]]] =
       Async[F].pure(marketPlaces.find(_.hostname == hostname))
+
+    override def fromName(name: String): F[Option[Marketplace[F]]] =
+      Async[F].pure(marketPlaces.find(_.name == name))
   }
 }

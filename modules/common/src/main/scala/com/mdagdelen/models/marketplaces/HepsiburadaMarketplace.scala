@@ -52,5 +52,8 @@ object HepsiburadaMarketplace {
 
     override def productInfo(path: String): F[_ <: MarketplaceProductResponse] =
       Sync[F].pure(HepsiburadaApiProductResponse("123"))
+
+    override def productInfoFromId(id: String): F[_ <: MarketplaceProductResponse] =
+      Sync[F].pure(HepsiburadaApiProductResponse("123"))
   }
 }

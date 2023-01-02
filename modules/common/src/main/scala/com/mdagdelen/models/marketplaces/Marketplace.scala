@@ -29,4 +29,5 @@ trait Marketplace[F[_]] {
   val hostname: Hostname
   val name: String
   def productInfo(path: Path): F[_ <: MarketplaceProductResponse]
+  def productInfoFromId(id: String): F[_ <: MarketplaceProductResponse]
 }

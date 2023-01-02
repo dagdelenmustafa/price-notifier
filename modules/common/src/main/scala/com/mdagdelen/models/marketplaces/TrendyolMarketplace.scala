@@ -74,17 +74,19 @@ object TrendyolMarketplace {
     override val hostname: Hostname                                                 = "trendyol.com"
     override val name: String                                                       = "trendyol"
 
-    override def productInfo(path: String): F[_ <: MarketplaceProductResponse] = {
-      val productPublicApiUrl = s"https://public.trendyol.com/discovery-web-productgw-service/api/productDetail/"
+    private val productPublicApiUrl = s"https://public.trendyol.com/discovery-web-productgw-service/api/productDetail/"
 
-      (
-        for {
-          productId <- Async[F].delay(path.split("-p-")(1))
-          res       <- client.expect[TrendyolPublicApiResponse](s"$productPublicApiUrl$productId")
-        } yield res
-      ).onError { case _ =>
-        Async[F].raiseError(ProductNotFound)
-      }
+    override def productInfo(path: String): F[_ <: MarketplaceProductResponse] = (for {
+      productId <- Async[F].delay(path.split("-p-")(1))
+      res       <- client.expect[TrendyolPublicApiResponse](s"$productPublicApiUrl$productId")
+    } yield res).onError { case _ =>
+      Async[F].raiseError(ProductNotFound)
+    }
+
+    override def productInfoFromId(id: String): F[_ <: MarketplaceProductResponse] = (for {
+      res <- client.expect[TrendyolPublicApiResponse](s"$productPublicApiUrl$id")
+    } yield res).onError { case _ =>
+      Async[F].raiseError(ProductNotFound)
     }
   }
 }

@@ -22,7 +22,7 @@ import cats.implicits._
 import com.google.common.net.InternetDomainName
 import com.mdagdelen.exceptions.Exceptions.UnsupportedMarketplace
 import com.mdagdelen.exceptions.{BaseError, Exceptions}
-import com.mdagdelen.models.marketplaces.Marketplace
+import com.mdagdelen.models.marketplaces.{Marketplace, MarketplaceBuilder}
 import com.mdagdelen.models.{Product, ProductId}
 import com.mdagdelen.repositories.{PriceRepository, ProductRepository}
 import com.mdagdelen.types.Types.{Hostname, Path}

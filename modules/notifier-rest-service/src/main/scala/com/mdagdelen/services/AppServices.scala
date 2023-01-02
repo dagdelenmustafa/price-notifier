@@ -19,6 +19,7 @@ package com.mdagdelen.services
 import cats.effect.Async
 import com.mdagdelen.AppResources
 import com.mdagdelen.gateways.AppGateways
+import com.mdagdelen.models.marketplaces.MarketplaceBuilder
 import com.mdagdelen.repositories.AppRepositories
 
 sealed trait AppServices[F[_]] {
